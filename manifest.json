@@ -2,7 +2,7 @@
   "name": "Portfolio Planner",
   "short_name": "Portfolio",
   "description": "FIRE & Rentenplanung Dashboard",
-  "start_url": "./portfolio-planner.html",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#060a12",
   "theme_color": "#060a12",
