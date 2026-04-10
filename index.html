@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Portfolio">
+<meta name="theme-color" content="#060a12">
+<link rel="manifest" href="manifest.json">
+<title>Portfolio Planner · Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#060a12;--surface:#0b1220;--card:#0e1628;--card2:#111d30;
+  --border:#182644;--border2:#1e3055;
+  --text:#dde4f0;--text2:#5d78a3;--text3:#2e4268;
+  --gold:#f0a030;--gold2:#ffc94a;--gold-dim:rgba(240,160,48,.11);
+  --blue:#3882f5;--blue-dim:rgba(56,130,245,.11);
+  --green:#0ec882;--green-dim:rgba(14,200,130,.10);
+  --red:#e84848;--red-dim:rgba(232,72,72,.10);
+  --orange:#f07030;
+  --sw:290px;--hd:50px;--hd-mobile:92px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --header-body: var(--hd);
+  --header-total: calc(var(--header-body) + var(--safe-top));
+  --fh:'Syne',sans-serif;--fm:'IBM Plex Mono',monospace;
+}
+html{font-size:14px;}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--fh);min-height:100vh;overflow:hidden;
+  padding-left:var(--safe-left);padding-right:var(--safe-right);
+}
+
+/* ── HEADER ── */
+#hdr{
+  height:var(--header-total);background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:var(--safe-top) calc(20px + var(--safe-right)) 0 calc(20px + var(--safe-left));
+  position:fixed;top:0;left:0;right:0;z-index:200;
+}
+.hdr-top{display:flex;align-items:center;gap:12px;min-width:0;flex:1 1 auto;}
+.hdr-right{display:flex;align-items:center;gap:12px;flex:0 0 auto;min-width:0;}
+#hdr .logo{
+  display:flex;align-items:center;gap:9px;font-size:13px;font-weight:800;
+  letter-spacing:.1em;text-transform:uppercase;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--gold);
+  box-shadow:0 0 10px var(--gold);animation:pulse 2.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 8px var(--gold);}50%{opacity:.6;box-shadow:0 0 18px var(--gold);}}
+#hdr-meta{font-family:var(--fm);font-size:11px;color:var(--text2);}
+#hdr-warn{font-family:var(--fm);font-size:11px;color:var(--red);display:none;}
+.action-btn{background:var(--card);border:1px solid var(--border);border-radius:5px;color:var(--text2);font-family:var(--fm);font-size:11px;padding:4px 12px;cursor:pointer;transition:all .15s;letter-spacing:.05em;}
+.action-btn:hover{border-color:var(--gold);color:var(--gold);}
+.action-row{display:flex;align-items:center;gap:8px;}
+.header-actions{justify-content:center;flex-wrap:wrap;}
+.action-btn.primary{border-color:var(--gold-dim);color:var(--gold);}
+.mobile-header-actions{display:none;}
+
+/* ── LAYOUT ── */
+#layout{display:flex;height:calc(100vh - var(--header-total));margin-top:var(--header-total);}
+
+/* ── SIDEBAR ── */
+#sb{width:var(--sw);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);
+  overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.ps{border-bottom:1px solid var(--border);}
+.psh{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;
+  cursor:pointer;user-select:none;font-size:10px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--text2);transition:color .15s;}
+.psh:hover{color:var(--text);}
+.chev{transition:transform .2s;font-size:9px;opacity:.6;}
+.ps.open .chev{transform:rotate(180deg);}
+.pb{display:none;padding:4px 14px 12px;}
+.ps.open .pb{display:block;}
+.pr{display:flex;flex-direction:column;gap:3px;margin-bottom:9px;}
+.pr label{font-size:10px;color:var(--text2);font-weight:500;}
+.pr input[type=number],.pr input[type=date],.pr input[type=text]{
+  background:var(--card);border:1px solid var(--border);border-radius:5px;
+  color:var(--text);font-family:var(--fm);font-size:12px;padding:5px 8px;width:100%;
+  transition:border-color .15s;-moz-appearance:textfield;}
+.pr input:focus{outline:none;border-color:var(--gold);}
+.pr input::-webkit-outer-spin-button,.pr input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.pr2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px;}
+.pr2 .pr{margin-bottom:0;}
+.tog-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.tog-row label:first-child{font-size:10px;color:var(--text2);font-weight:500;}
+.tog{position:relative;width:34px;height:18px;}
+.tog input{opacity:0;width:0;height:0;}
+.tok{position:absolute;cursor:pointer;inset:0;background:var(--border2);border-radius:20px;transition:.2s;}
+.tok::after{content:'';position:absolute;width:12px;height:12px;left:3px;top:3px;
+  background:#fff;border-radius:50%;transition:.2s;}
+.tog input:checked+.tok{background:var(--gold);}
+.tog input:checked+.tok::after{transform:translateX(16px);}
+.rw{display:flex;align-items:center;gap:7px;}
+.rw input[type=range]{flex:1;appearance:none;height:3px;background:var(--border2);border-radius:2px;outline:none;}
+.rw input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;border-radius:50%;background:var(--gold);cursor:pointer;}
+.sarr{background:var(--card);border:1px solid var(--border);border-radius:4px;
+  color:var(--text2);font-size:14px;line-height:1;width:20px;height:20px;
+  cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;padding:0;}
+.sarr:hover{background:var(--border);color:var(--gold);border-color:var(--gold);}
+.rv{font-family:var(--fm);font-size:12px;color:var(--gold);min-width:26px;text-align:right;}
+.sep{height:1px;background:var(--border);margin:6px 0;}
+.stitle{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:5px;margin-top:2px;}
+.hint{font-size:10px;color:var(--text2);font-family:var(--fm);margin-top:2px;margin-bottom:7px;}
+.hint.warn{color:var(--orange);}
+.hint.ok{color:var(--green);}
+/* Betriebsrente radio rows */
+/* Betriebsrente radio rows */
+.br-cols{display:grid;grid-template-columns:68px 1fr 1fr;gap:5px;margin-bottom:3px;
+  border-bottom:1px solid var(--border);padding-bottom:5px;}
+.br-cols span{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text3);text-align:right;padding:0 2px;}
+.br-cols span:first-child{text-align:left;}
+.br-row{display:grid;grid-template-columns:68px 1fr 1fr;gap:5px;align-items:center;margin-bottom:6px;}
+.br-row input[type=text]{font-size:12px;padding:5px 8px;background:var(--card);border:1px solid var(--border);
+  border-radius:5px;color:var(--text);font-family:var(--fm);width:100%;text-align:right;
+  transition:border-color .15s;}
+.br-row input[type=text]:focus{outline:none;border-color:var(--gold);}
+.br-lbl{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);cursor:pointer;
+  font-weight:500;transition:color .15s;white-space:nowrap;}
+.br-lbl:hover{color:var(--text);}
+.br-lbl input[type=radio]{display:none;}
+.br-dot{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--border2);
+  flex-shrink:0;transition:all .15s;position:relative;background:transparent;}
+.br-lbl input[type=radio]:checked~.br-dot{border-color:var(--gold);}
+.br-lbl input[type=radio]:checked~.br-dot::after{
+  content:'';position:absolute;inset:2px;border-radius:50%;background:var(--gold);}
+.br-row:has(input[type=radio]:checked) .br-lbl{color:var(--gold2);font-weight:600;}
+.br-row:has(input[type=radio]:checked) input[type=text]{border-color:var(--gold-dim);}
+
+/* ── MAIN ── */
+#main{flex:1;overflow-y:auto;padding:16px 18px 24px;
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+
+/* ── KPI CARDS ── */
+#kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.kc{background:var(--card);border:1px solid var(--border);border-radius:8px;
+  padding:14px 16px;position:relative;overflow:hidden;}
+.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kc.gld::before{background:linear-gradient(90deg,var(--gold),transparent);}
+.kc.blu::before{background:linear-gradient(90deg,var(--blue),transparent);}
+.kc.grn::before{background:linear-gradient(90deg,var(--green),transparent);}
+.kc.red::before{background:linear-gradient(90deg,var(--red),transparent);}
+.kl{font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--text2);margin-bottom:7px;}
+.kv{font-family:var(--fm);font-size:20px;font-weight:600;line-height:1;margin-bottom:4px;}
+.kc.gld .kv{color:var(--gold2);}
+.kc.blu .kv{color:var(--blue);}
+.kc.grn .kv{color:var(--green);}
+.kc.red .kv{color:var(--red);}
+.ks{font-size:10px;color:var(--text2);}
+
+/* ── MILESTONE ROW ── */
+#ms-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.ms-card{background:var(--card);border:1px solid var(--border);border-radius:7px;
+  padding:10px 13px;display:flex;flex-direction:column;gap:3px;position:relative;overflow:hidden;}
+.ms-card.reached::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--green),transparent);}
+.ms-card.unreached::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--text3),transparent);}
+.ms-threshold{font-family:var(--fm);font-size:13px;font-weight:600;color:var(--text2);}
+.ms-card.reached .ms-threshold{color:var(--green);}
+.ms-year{font-family:var(--fm);font-size:11px;color:var(--text);font-weight:500;}
+.ms-age{font-size:10px;color:var(--text2);}
+.ms-eta{font-size:10px;color:var(--text3);font-family:var(--fm);}
+.ms-card.reached .ms-eta{color:var(--green-dim);color:#0a7a4e;}
+#charts{display:grid;grid-template-columns:1.6fr 1fr;gap:10px;margin-bottom:14px;}
+#chart-depot-wrap{grid-column:1/-1;}
+.cc{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.ct{font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--text2);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.ct-tag{font-size:9px;padding:2px 7px;border-radius:20px;font-family:var(--fm);}
+.ct-tag.gld{background:var(--gold-dim);color:var(--gold);}
+.ct-tag.blu{background:var(--blue-dim);color:var(--blue);}
+.cw{position:relative;height:200px;}
+.cw.tall{height:240px;}
+
+/* ── TABLES ── */
+#tbls{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.tabs{display:flex;border-bottom:1px solid var(--border);}
+.tb{padding:10px 18px;font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--text2);background:transparent;border:none;border-bottom:2px solid transparent;
+  cursor:pointer;transition:all .15s;margin-bottom:-1px;}
+.tb.on{color:var(--gold);border-bottom-color:var(--gold);}
+.tb:hover:not(.on){color:var(--text);}
+.tp{display:none;max-height:300px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.tp.on{display:block;}
+table{width:100%;border-collapse:collapse;font-family:var(--fm);font-size:11px;}
+thead th{position:sticky;top:0;background:var(--surface);color:var(--text2);font-size:9px;
+  font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:9px 10px;
+  text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;}
+thead th:first-child{text-align:left;}
+tbody td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);
+  color:var(--text);white-space:nowrap;}
+tbody td:first-child{text-align:left;}
+tbody tr:hover td{background:var(--card2);}
+tbody tr.ms td{color:var(--gold2);}
+tbody tr.ms td:first-child{font-weight:700;}
+tbody tr.dep td{color:var(--red);}
+.ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px;padding:14px;}
+.ai{display:flex;flex-direction:column;gap:2px;}
+.al{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);}
+.av{font-family:var(--fm);font-size:12px;color:var(--text);}
+.def-grid{padding:14px;column-count:2;column-gap:20px;}
+.def-section{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--gold);margin:10px 0 5px;break-inside:avoid;column-span:none;}
+.def-section:first-child{margin-top:0;}
+.def-row{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  margin-bottom:5px;break-inside:avoid;}
+.def-row span{font-size:10px;color:var(--text2);flex:1;min-width:0;}
+.def-row input[type=text],.def-row input[type=number],.def-row select{
+  font-family:var(--fm);font-size:11px;background:var(--card);border:1px solid var(--border);
+  border-radius:4px;color:var(--text);padding:3px 6px;width:90px;text-align:right;
+  transition:border-color .15s;}
+.def-row input[type=text]:focus,.def-row input[type=number]:focus,.def-row select:focus{
+  outline:none;border-color:var(--gold);}
+.def-row select{width:90px;cursor:pointer;}
+.def-row input[type=checkbox]{accent-color:var(--gold);width:16px;height:16px;cursor:pointer;}
+
+/* ── MOBILE ── */
+#menu-btn{display:none;background:none;border:none;color:var(--text2);font-size:18px;
+  cursor:pointer;padding:6px 8px;line-height:1;transition:color .15s;}
+#menu-btn:hover{color:var(--gold);}
+#sb-overlay{display:none;position:fixed;inset:0;top:var(--header-total);background:rgba(0,0,0,.55);z-index:140;}
+#sb-overlay.show{display:block;}
+
+@media(max-width:800px){
+  body{overflow:hidden;}
+  :root{--header-body: var(--hd-mobile);}
+  #hdr{
+    padding:var(--safe-top) calc(12px + var(--safe-right)) 8px calc(12px + var(--safe-left));
+    display:grid;grid-template-columns:1fr;grid-template-rows:auto auto;align-items:stretch;gap:8px;
+  }
+  .hdr-top{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:10px;min-width:0;}
+  .hdr-right{display:none;}
+  #hdr .logo{font-size:11px;gap:6px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  #hdr-meta{display:none;}
+  .hdr-top #hdr-warn{display:none !important;}
+  .mobile-header-actions{display:flex;}
+  .action-row.header-actions{display:flex;justify-content:flex-start;gap:6px;min-width:0;padding-left:38px;overflow-x:auto;scrollbar-width:none;}
+  .action-row.header-actions::-webkit-scrollbar{display:none;}
+  .action-row.header-actions .action-btn{font-size:9px;padding:6px 8px;letter-spacing:0;white-space:nowrap;flex:0 0 auto;}
+  #hdr-warn{font-size:10px;}
+  #menu-btn{display:block;flex:0 0 auto;margin-right:0;}
+
+  #layout{height:calc(100vh - var(--header-total));}
+
+  #sb{position:fixed;top:var(--header-total);left:0;bottom:0;width:82vw;max-width:310px;
+    z-index:150;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+    box-shadow:6px 0 30px rgba(0,0,0,.6);}
+  #sb.open{transform:translateX(0);}
+
+  #main{padding:10px 10px calc(20px + var(--safe-bottom));}
+
+  #kpis{grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;}
+  .kv{font-size:16px;}
+  .kl{font-size:8px;}
+
+  #ms-row{grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:10px;}
+  .ms-card{padding:8px 10px;}
+  .ms-threshold{font-size:11px;}
+
+  #charts{grid-template-columns:1fr;gap:8px;margin-bottom:10px;}
+  #chart-depot-wrap{grid-column:1;}
+  .cw{height:170px;}
+  .cw.tall{height:210px;}
+
+  #tbls{border-radius:6px;}
+  .tp{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tab-bar{overflow-x:auto;scrollbar-width:none;}
+  .tab-bar::-webkit-scrollbar{display:none;}
+  .tb{padding:10px 12px;white-space:nowrap;font-size:9px;}
+
+  .sarr{width:26px;height:26px;font-size:15px;}
+  .rw input[type=range]::-webkit-slider-thumb{width:18px;height:18px;}
+  .rv{font-size:13px;}
+
+  .kc{padding:12px 12px;}
+  .ms-card{padding:8px 10px;}
+}
+
+@media(max-width:400px){
+  #kpis{grid-template-columns:1fr 1fr;}
+  .kv{font-size:14px;}
+}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div class="hdr-top">
+    <button id="menu-btn" onclick="toggleSidebar()" aria-label="Menü">☰</button>
+    <div class="logo"><div class="pulse"></div>Portfolio Planner</div>
+    <div id="hdr-warn">⚠ Depot erschöpft!</div>
+  </div>
+  <div class="hdr-right">
+    <div class="action-row header-actions"><button class="action-btn" onclick="resetToDefaults()" title="Aktuelle Werte auf gespeicherte Standardwerte zurücksetzen">↺ Standard laden</button><button class="action-btn primary" onclick="saveCurrentAsDefaults()" title="Aktuelle Werte als neue Standardwerte speichern">★ Als Standard speichern</button></div>
+    <div id="hdr-meta">Berechnung läuft …</div>
+  </div>
+  <div class="action-row header-actions mobile-header-actions"><button class="action-btn" onclick="resetToDefaults()" title="Aktuelle Werte auf gespeicherte Standardwerte zurücksetzen">↺ Standard laden</button><button class="action-btn primary" onclick="saveCurrentAsDefaults()" title="Aktuelle Werte als neue Standardwerte speichern">★ Als Standard speichern</button></div>
+</div>
+
+<div id="layout">
+<!-- ══ SIDEBAR ══════════════════════════════════════════════════════ -->
+<aside id="sb">
+
+  <div class="ps open">
+    <div class="psh" onclick="tog(this)"><span>👤 Persönlich</span><span class="chev">▼</span></div>
+    <div class="pb">
+      <div class="pr"><label>Geburtsdatum</label>
+        <input type="text" id="p-bd" value="11.09.1989" placeholder="TT.MM.JJJJ" maxlength="10"></div>
+      <div class="pr"><label>FIRE-Alter (Renteneintritt)</label>
+        <div class="rw"><button class="sarr" onclick="stepSlider('p-fa',-1)">‹</button><input type="range" id="p-fa" min="45" max="67" value="55">
+          <span class="rv" id="p-fa-v">55</span><button class="sarr" onclick="stepSlider('p-fa',1)">›</button></div></div>
+      <div class="pr"><label>GRV Bezug ab Alter</label>
+        <div class="rw"><button class="sarr" onclick="stepSlider('p-ga',-1)">‹</button><input type="range" id="p-ga" min="60" max="70" value="63">
+          <span class="rv" id="p-ga-v">63</span><button class="sarr" onclick="stepSlider('p-ga',1)">›</button></div>
+        <div class="hint" id="grv-hint">—</div></div>
+      <div class="pr"><label>Regelrentenalter</label>
+        <input type="text" id="p-rra" value="67"></div>
+    </div>
+  </div>
+
+  <div class="ps open">
+    <div class="psh" onclick="tog(this)"><span>📊 Depot & Wachstum</span><span class="chev">▼</span></div>
+    <div class="pb">
+      <div class="pr"><label>Depotwert aktuell (€)</label>
+        <input type="text" id="p-dep" value="305000"></div>
+      <div class="pr2">
+        <div class="pr"><label>Wachstum p.a. (%)</label>
+          <div class="rw"><button class="sarr" onclick="stepPct('p-gr',-0.5)">‹</button>
+          <input type="text" id="p-gr" value="5,5">
+          <button class="sarr" onclick="stepPct('p-gr',0.5)">›</button></div></div>
+        <div class="pr"><label>Bruttodividende (%)</label>
+          <input type="text" id="p-dv" value="0,65"></div>
+      </div>
+      <div class="pr"><label>Entnahmerate p.a. (%) — für Freiheitsgrad &amp; Lücke</label>
+        <div class="rw"><button class="sarr" onclick="stepPct('p-wr',-0.5)">‹</button>
+        <input type="text" id="p-wr" value="4,0">
+        <button class="sarr" onclick="stepPct('p-wr',0.5)">›</button></div></div>
+      <div class="hint" id="wr-hint">—</div>
+      <div class="tog-row"><label>Crypto einbeziehen</label>
+        <label class="tog"><input type="checkbox" id="p-ct" checked><span class="tok"></span></label></div>
+      <div class="pr" id="ctrow"><label>Crypto Betrag (€)</label>
+        <input type="text" id="p-cb" value="14000"></div>
+    </div>
+  </div>
+
+  <div class="ps open">
+    <div class="psh" onclick="tog(this)"><span>💰 Sparplan & Einmalinvest</span><span class="chev">▼</span></div>
+    <div class="pb">
+      <div class="pr2">
+        <div class="pr"><label>Sparrate / Monat (€)</label>
+          <input type="text" id="p-mo" value="1050"></div>
+        <div class="pr"><label>Dynamik p.a. (%)</label>
+          <div class="rw"><button class="sarr" onclick="stepPct('p-dy',-0.5)">‹</button>
+          <input type="text" id="p-dy" value="5,0">
+          <button class="sarr" onclick="stepPct('p-dy',0.5)">›</button></div></div>
+      </div>
+      <div class="sep"></div>
+      <div class="stitle">Einmalinvestition</div>
+      <div class="pr2">
+        <div class="pr"><label>Betrag (€)</label>
+          <input type="text" id="p-li" value="90000"></div>
+        <div class="pr"><label>Im Jahr</label>
+          <input type="text" id="p-ly" value="2026"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ps open">
+    <div class="psh" onclick="tog(this)"><span>🏠 Lebenshaltung</span><span class="chev">▼</span></div>
+    <div class="pb">
+      <div class="pr2">
+        <div class="pr"><label>Wohnen all-incl. (€)</label>
+          <input type="text" id="p-l1" value="1500"></div>
+        <div class="pr"><label>Einkaufen & Essen (€)</label>
+          <input type="text" id="p-l2" value="1000"></div>
+      </div>
+      <div class="pr2">
+        <div class="pr"><label>Freizeit etc. (€)</label>
+          <input type="text" id="p-l3" value="1000"></div>
+        <div class="pr"><label>Urlaub & Sonstiges (€)</label>
+          <input type="text" id="p-l4" value="500"></div>
+      </div>
+      <div class="pr2">
+        <div class="pr"><label>Versicherungen (€)</label>
+          <input type="text" id="p-l5" value="800"></div>
+        <div class="pr"><label>Fix & Abos (€)</label>
+          <input type="text" id="p-l6" value="200"></div>
+      </div>
+      <div class="pr"><label>Inflation p.a. (%)</label>
+        <div class="rw"><button class="sarr" onclick="stepPct('p-inf',-0.5)">‹</button>
+        <input type="text" id="p-inf" value="1,0">
+        <button class="sarr" onclick="stepPct('p-inf',0.5)">›</button></div></div>
+    </div>
+  </div>
+
+  <div class="ps open">
+    <div class="psh" onclick="tog(this)"><span>🏛️ Gesetzliche Rente</span><span class="chev">▼</span></div>
+    <div class="pb">
+      <div class="tog-row"><label>GRV einbeziehen</label>
+        <label class="tog"><input type="checkbox" id="p-grv-on" checked><span class="tok"></span></label></div>
+      <div class="pr2">
+        <div class="pr"><label>Rentenpunkte heute</label>
+          <input type="text" id="p-rp" value="22,6585"></div>
+        <div class="pr"><label>Rentenpunkte p.a.</label>
+          <input type="text" id="p-rpa" value="1,95"></div>
+      </div>
+      <div class="pr"><label>Aktueller Rentenpunktwert (€)</label>
+        <input type="text" id="p-rpw" value="39,32"></div>
+      <div class="pr"><label>GRV Nettofaktor nach Einkommensteuer (%)</label>
+        <div class="rw"><button class="sarr" onclick="stepPct('p-gnf',-1)">‹</button>
+        <input type="text" id="p-gnf" value="85">
+        <button class="sarr" onclick="stepPct('p-gnf',1)">›</button></div></div>
+      <div class="hint" id="grv-calc-hint">—</div>
+    </div>
+  </div>
+
+  <div class="ps open">
+    <div class="psh" onclick="tog(this)"><span>🏢 Betriebsrente</span><span class="chev">▼</span></div>
+    <div class="pb">
+      <div class="tog-row"><label>Betriebsrente einbeziehen</label>
+        <label class="tog"><input type="checkbox" id="p-br-on" checked><span class="tok"></span></label></div>
+      <div class="br-cols"><span></span><span>€ / Mon.</span><span>Einmalig</span></div>
+      <div class="br-row">
+        <label class="br-lbl"><input type="radio" name="br-sel" value="62" id="br-62" checked><span class="br-dot"></span>Ab 62</label>
+        <input type="text" id="p-bpk62" value="866,34">
+        <input type="text" id="p-bpp62" value="196901">
+      </div>
+      <div class="br-row">
+        <label class="br-lbl"><input type="radio" name="br-sel" value="65" id="br-65"><span class="br-dot"></span>Ab 65</label>
+        <input type="text" id="p-bpk65" value="1057,19">
+        <input type="text" id="p-bpp65" value="234633">
+      </div>
+      <div class="br-row">
+        <label class="br-lbl"><input type="radio" name="br-sel" value="67" id="br-67"><span class="br-dot"></span>Ab 67</label>
+        <input type="text" id="p-bpk67" value="1204,72">
+        <input type="text" id="p-bpp67" value="260352">
+      </div>
+    </div>
+  </div>
+
+</aside>
+<div id="sb-overlay" onclick="toggleSidebar()"></div>
+
+<!-- ══ MAIN ════════════════════════════════════════════════════════ -->
+<main id="main">
+
+  <div id="kpis">
+    <div class="kc gld">
+      <div class="kl">Depotwert bei FIRE</div>
+      <div class="kv" id="k-dep">—</div>
+      <div class="ks" id="k-dep-s">—</div>
+    </div>
+    <div class="kc blu">
+      <div class="kl">Dividende p.m. bei FIRE</div>
+      <div class="kv" id="k-div">—</div>
+      <div class="ks" id="k-div-s">—</div>
+    </div>
+    <div class="kc grn">
+      <div class="kl">Freiheitsgrad bei FIRE</div>
+      <div class="kv" id="k-frd">—</div>
+      <div class="ks" id="k-frd-s">—</div>
+    </div>
+    <div class="kc" id="k-gap-card">
+      <div class="kl">WR-Puffer / Fehlbetrag</div>
+      <div class="kv" id="k-gap">—</div>
+      <div class="ks" id="k-gap-s">—</div>
+    </div>
+  </div>
+
+  <!-- Milestone row -->
+  <div id="ms-row"></div>
+
+  <div id="charts">
+    <div class="cc" id="chart-depot-wrap">
+      <div class="ct">
+        <span>Depotverlauf — Anspar- &amp; Rentenphase</span>
+        <span class="ct-tag gld" id="depletion-tag" style="display:none"></span>
+      </div>
+      <div class="cw tall"><canvas id="c-depot"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="ct">
+        <span>Einkommensquellen – Rentenphase</span>
+        <span class="ct-tag blu">monatl.</span>
+      </div>
+      <div class="cw"><canvas id="c-income"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="ct">
+        <span>Freiheitsgrad (WR × Depot + Rente vs. Bedarf)</span>
+      </div>
+      <div class="cw"><canvas id="c-freedom"></canvas></div>
+    </div>
+  </div>
+
+  <div id="tbls">
+    <div class="tabs">
+      <button class="tb on" data-t="an">Ansparphase</button>
+      <button class="tb" data-t="re">Rentenphase</button>
+      <button class="tb" data-t="as">Annahmen</button>
+      <button class="tb" data-t="def">Standardwerte</button>
+    </div>
+    <div class="tp on" id="tp-an">
+      <table>
+        <thead><tr>
+          <th>Alter</th><th>Jahr</th><th>Depot Start</th>
+          <th>Wachstum</th><th>Dividende</th>
+          <th>Invest (fix)</th><th>Invest (variabel)</th>
+          <th>Depot Ende</th><th>DIV/Monat netto</th>
+        </tr></thead>
+        <tbody id="tb-an"></tbody>
+      </table>
+    </div>
+    <div class="tp" id="tp-re">
+      <div class="hint" style="padding:10px 14px 0 14px;">Wachstum = Kursgewinn, kein ausgabefähiger Cashflow. „Verkauf brutto/Mon." ist der vereinfachte Portfolio-Verkauf zur Deckung des Netto-Restbedarfs. „WR-Puffer" = WR-Leitplanke minus benötigter Verkauf.</div>
+      <table>
+        <thead><tr>
+          <th>Alter</th><th>Jahr</th><th>Depot Start</th>
+          <th>Wachstum (Kurs)</th><th>Div. brutto</th><th>Div. netto/Mon.</th>
+          <th>Verkauf brutto/Mon.</th><th>GRV (netto)</th><th>Betriebsrente</th><th>Einmalzahlung</th>
+          <th>Bedarf netto/Mon.</th><th>WR-Leitplanke</th><th>WR-Puffer/Mon.</th><th>Depot Ende</th>
+        </tr></thead>
+        <tbody id="tb-re"></tbody>
+      </table>
+    </div>
+    <div class="tp" id="tp-as">
+      <div class="ag" id="ag"></div>
+    </div>
+    <div class="tp" id="tp-def">
+      <div class="def-grid">
+        <div class="def-section">Persönlich</div>
+        <div class="def-row"><span>Geburtsdatum</span><input type="text" id="def-p-bd" value="11.09.1989"></div>
+        <div class="def-row"><span>FIRE-Alter</span><input type="number" id="def-p-fa" min="45" max="67" value="55"></div>
+        <div class="def-row"><span>GRV ab Alter</span><input type="number" id="def-p-ga" min="60" max="70" value="63"></div>
+        <div class="def-row"><span>Regelrentenalter</span><input type="text" id="def-p-rra" value="67"></div>
+
+        <div class="def-section">Depot & Wachstum</div>
+        <div class="def-row"><span>Depotwert (€)</span><input type="text" id="def-p-dep" value="305000"></div>
+        <div class="def-row"><span>Wachstum p.a. (%)</span><input type="text" id="def-p-gr" value="5,5"></div>
+        <div class="def-row"><span>Bruttodividende (%)</span><input type="text" id="def-p-dv" value="0,65"></div>
+        <div class="def-row"><span>Entnahmerate p.a. (%)</span><input type="text" id="def-p-wr" value="4,0"></div>
+        <div class="def-row"><span>Crypto einbeziehen</span><input type="checkbox" id="def-p-ct" checked></div>
+        <div class="def-row"><span>Crypto Betrag (€)</span><input type="text" id="def-p-cb" value="14000"></div>
+
+        <div class="def-section">Sparplan</div>
+        <div class="def-row"><span>Sparrate / Monat (€)</span><input type="text" id="def-p-mo" value="1050"></div>
+        <div class="def-row"><span>Dynamik p.a. (%)</span><input type="text" id="def-p-dy" value="5,0"></div>
+        <div class="def-row"><span>Einmalinvest Betrag (€)</span><input type="text" id="def-p-li" value="90000"></div>
+        <div class="def-row"><span>Einmalinvest Jahr</span><input type="text" id="def-p-ly" value="2026"></div>
+
+        <div class="def-section">Lebenshaltung</div>
+        <div class="def-row"><span>Wohnen all-incl. (€)</span><input type="text" id="def-p-l1" value="1500"></div>
+        <div class="def-row"><span>Einkaufen & Essen (€)</span><input type="text" id="def-p-l2" value="1000"></div>
+        <div class="def-row"><span>Freizeit etc. (€)</span><input type="text" id="def-p-l3" value="1000"></div>
+        <div class="def-row"><span>Urlaub & Sonstiges (€)</span><input type="text" id="def-p-l4" value="500"></div>
+        <div class="def-row"><span>Versicherungen (€)</span><input type="text" id="def-p-l5" value="800"></div>
+        <div class="def-row"><span>Fix & Abos (€)</span><input type="text" id="def-p-l6" value="200"></div>
+        <div class="def-row"><span>Inflation p.a. (%)</span><input type="text" id="def-p-inf" value="1,0"></div>
+
+        <div class="def-section">Gesetzliche Rente</div>
+        <div class="def-row"><span>GRV einbeziehen</span><input type="checkbox" id="def-p-grv-on" checked></div>
+        <div class="def-row"><span>Rentenpunkte heute</span><input type="text" id="def-p-rp" value="22,6585"></div>
+        <div class="def-row"><span>Rentenpunkte p.a.</span><input type="text" id="def-p-rpa" value="1,95"></div>
+        <div class="def-row"><span>Rentenpunktwert (€)</span><input type="text" id="def-p-rpw" value="39,32"></div>
+        <div class="def-row"><span>GRV Nettofaktor (%)</span><input type="text" id="def-p-gnf" value="85"></div>
+
+        <div class="def-section">Betriebsrente</div>
+        <div class="def-row"><span>Betriebsrente einbeziehen</span><input type="checkbox" id="def-p-br-on" checked></div>
+        <div class="def-row"><span>Auswahl</span>
+          <select id="def-br-sel"><option value="62" selected>Ab 62</option><option value="65">Ab 65</option><option value="67">Ab 67</option></select>
+        </div>
+        <div class="def-row"><span>Ab 62 €/Mon.</span><input type="text" id="def-p-bpk62" value="866,34"></div>
+        <div class="def-row"><span>Ab 62 Einmalig</span><input type="text" id="def-p-bpp62" value="196901"></div>
+        <div class="def-row"><span>Ab 65 €/Mon.</span><input type="text" id="def-p-bpk65" value="1057,19"></div>
+        <div class="def-row"><span>Ab 65 Einmalig</span><input type="text" id="def-p-bpp65" value="234633"></div>
+        <div class="def-row"><span>Ab 67 €/Mon.</span><input type="text" id="def-p-bpk67" value="1204,72"></div>
+        <div class="def-row"><span>Ab 67 Einmalig</span><input type="text" id="def-p-bpp67" value="260352"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+// ── CONSTANTS ────────────────────────────────────────────────────────
+const KEST  = 0.26375;
+const FRST  = 1000;   // Freistellungsbetrag €
+const MS    = [40,45,50,55,60,65,67,70,75,80,85,90];
+
+// ── HELPERS ──────────────────────────────────────────────────────────
+const fmtE = (v,d=0) => isNaN(v)||v===null?'—': new Intl.NumberFormat('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d}).format(v)+' €';
+const toDE = (v,d=0) => (typeof v==='number'&&!isNaN(v)) ? v.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d}) : String(v);
+const pct  = v => toDE(v*100,1)+'%';
+
+function parseBD(bd){
+  // Accept DD.MM.YYYY or YYYY-MM-DD
+  if(!bd) return new Date('1989-09-11');
+  if(bd.includes('.')){
+    const [d,m,y]=bd.split('.');
+    if(y&&m&&d) return new Date(+y,+m-1,+d);
+  }
+  return new Date(bd);
+}
+function getAge(bd){
+  const b=parseBD(bd),t=new Date(); let a=t.getFullYear()-b.getFullYear();
+  const m=t.getMonth()-b.getMonth();
+  if(m<0||(m===0&&t.getDate()<b.getDate())) a--;
+  return isNaN(a)?36:a;
+}
+const CY = () => new Date().getFullYear();
+const CM = () => new Date().getMonth()+1; // 1–12
+
+function netDiv(gross){
+  if(gross<=FRST) return gross;
+  return FRST+(gross-FRST)*(1-KEST);
+}
+
+// ── PARAMS ───────────────────────────────────────────────────────────
+function P(){
+  // Parse German-formatted number: replace comma→dot, strip everything except digits/dot/minus
+  const n = id => {
+    const raw = document.getElementById(id)?.value || '0';
+    const clean = raw.replace(/\./g,'').replace(',','.').replace(/[^0-9.\-]/g,'');
+    return parseFloat(clean) || 0;
+  };
+  const s = id => document.getElementById(id)?.value||'';
+  const c = id => document.getElementById(id)?.checked??false;
+  return {
+    bd:     s('p-bd')||'11.09.1989',
+    fa:     parseInt(document.getElementById('p-fa')?.value)||55,
+    ga:     parseInt(document.getElementById('p-ga')?.value)||63,
+    rra:    n('p-rra'),
+    dep:    n('p-dep'),
+    gr:     n('p-gr')/100,
+    dv:     n('p-dv')/100,
+    wr:     n('p-wr')/100,
+    ct:     c('p-ct'),
+    cb:     n('p-cb'),
+    mo:     n('p-mo'),
+    dy:     n('p-dy')/100,
+    li:     n('p-li'),
+    ly:     Math.round(n('p-ly')),
+    lhk:    [n('p-l1'),n('p-l2'),n('p-l3'),n('p-l4'),n('p-l5'),n('p-l6')],
+    inf:    n('p-inf')/100,
+    rp:     n('p-rp'),
+    rpa:    n('p-rpa'),
+    rpw:    n('p-rpw'),
+    gnf:    n('p-gnf')/100,
+    grvOn:  c('p-grv-on'),
+    brOn:   c('p-br-on'),
+    bpk62:  n('p-bpk62'), bpk65:  n('p-bpk65'), bpk67:  n('p-bpk67'),
+    bpp62:  n('p-bpp62'), bpp65:  n('p-bpp65'), bpp67:  n('p-bpp67'),
+    get brAge(){ return parseInt(document.querySelector('input[name="br-sel"]:checked')?.value||'65'); },
+    get bpk(){ const a=this.brAge; return a===62?n('p-bpk62'):a===67?n('p-bpk67'):n('p-bpk65'); },
+    get bpp(){ const a=this.brAge; return a===62?n('p-bpp62'):a===67?n('p-bpp67'):n('p-bpp65'); },
+  };
+}
+
+function basfPK(age,p){ if(age>=67) return p.bpk67; if(age>=65) return p.bpk65; if(age>=62) return p.bpk62; return 0; }
+function basfPP(age,p){ if(age>=67) return p.bpp67; if(age>=65) return p.bpp65; if(age>=62) return p.bpp62; return 0; }
+
+// ── CALCULATION ──────────────────────────────────────────────────────
+function calc(){
+  const p = P();
+  const curAge  = getAge(p.bd);
+  const curYear = CY();
+  const curMon  = CM(); // April = 4 → months done=4, remaining=8
+  const monLeft = 12 - curMon;  // months remaining this year incl. not yet started (8 for April)
+
+  // ── Ansparphase ──
+  const anspar = [];
+  let depot = p.dep + (p.ct ? p.cb : 0);
+  const fireYear = curYear + (p.fa - curAge);
+
+  for(let y=0; curYear+y<=fireYear; y++){
+    const year = curYear+y;
+    const age  = curAge+y;
+    const mons = y===0 ? monLeft : 12;
+    const frac = mons/12;
+
+    const wachstum       = depot * p.gr * frac;
+    const divActualGross = depot * p.dv * frac;   // actual gross this year (partial or full)
+    const divActualNet   = netDiv(divActualGross); // net after KeSt+Freistellung → reinvested
+    const divAnnualNet   = netDiv(depot * p.dv);   // annualised net, for monthly display
+    const divNetMo       = divAnnualNet / 12;      // ~ DIV/Monat netto column
+
+    const savMo   = p.mo * Math.pow(1+p.dy, y);
+    const invFix  = savMo * mons;
+    const invVar  = year===p.ly ? p.li : 0;
+
+    const depEnd  = depot + wachstum + divActualNet + invFix + invVar; // NET div reinvested
+
+    anspar.push({year,age,depStart:depot,wachstum,divGross:divActualGross,invFix,invVar,depEnd,divNetMo,savMo,
+      ms:MS.includes(age)});
+    depot = depEnd;
+  }
+
+  // ── GRV ──
+  const yrsWork = p.fa - curAge;
+  const rpFire  = p.rp + yrsWork * p.rpa;
+  const moBefore= Math.max(0,(p.rra-p.ga)*12);
+  const absch   = Math.min(14.4, moBefore*0.3);
+  const grvBrut = rpFire * p.rpw * (1-absch/100);
+  const grvNet  = p.grvOn ? grvBrut * p.gnf : 0;
+
+  // Betriebsrente: starts at selected bracket age, amounts from selection
+  const ppAmt = p.brOn ? p.bpp : 0;
+
+  // ── Rentenphase ──
+  const renten = [];
+  const lhkBase = p.lhk.reduce((a,b)=>a+b,0);
+  depot = anspar.length ? anspar[anspar.length-1].depEnd : p.dep;
+  let ppAdded = false;
+  let depleted = null;
+
+  for(let y=0; y<40; y++){
+    const age  = p.fa+y;
+    const year = fireYear+y;
+    if(age>90) break;
+
+    if(p.brOn && !ppAdded && age>=p.brAge){
+      depot += ppAmt;
+      ppAdded = true;
+    }
+
+    const depStart = depot;
+    const wachstum = depot * p.gr;
+    const divGross = depot * p.dv;
+    const divNet   = netDiv(divGross);
+    const divNetMo = divNet/12;
+
+    const yrsFromNow = year-curYear;
+    const lhkMo     = lhkBase * Math.pow(1+p.inf, yrsFromNow);
+
+    const grvMo    = p.grvOn && age>=p.ga    ? grvNet : 0;
+    const basfMo   = p.brOn  && age>=p.brAge ? p.bpk  : 0;
+    const ppThisYr = p.brOn  && age===p.brAge ? ppAmt : 0; // for table display only
+    const renteMo  = grvMo+basfMo;
+
+    const gapNetto = Math.max(0, lhkMo - divNetMo - renteMo);
+    const entMo    = gapNetto/(1-KEST);   // vereinfachter Brutto-Verkauf zur Deckung des Netto-Restbedarfs
+    const entYear  = entMo*12;
+
+    // Depot: wächst nur über Kurswachstum; Dividenden werden als Cashflow betrachtet, nicht reinvestiert
+    const depEnd = Math.max(0, depStart + wachstum - entYear);
+    // WR-Leitplanke als Vergleichswert
+    const wrMo = depStart * p.wr / 12;
+    const frd  = Math.min(2, (wrMo + divNetMo + renteMo) / lhkMo);
+    const wrBufferMo = wrMo - entMo;
+    const cashflowNetMo = divNetMo + renteMo + gapNetto - lhkMo;
+    const depotDeltaYear = depEnd - depStart;
+
+    renten.push({year,age,depStart,wachstum,divGross,divNetMo,entMo,entYear,
+      grvMo,basfMo,ppThisYr,renteMo,lhkMo,depEnd,frd,wrMo,wrBufferMo,cashflowNetMo,depotDeltaYear,
+      ms:MS.includes(age),dep:depEnd<=0});
+    depot = depEnd;
+    if(depEnd<=0 && depleted===null) depleted={age,year};
+    if(depEnd<=0) break;
+  }
+
+  return {p,anspar,renten,curAge,curYear,fireYear,grvBrut,grvNet,absch,rpFire,ppAmt,depleted};
+}
+
+// ── CHARTS ───────────────────────────────────────────────────────────
+let cDepot, cIncome, cFreedom;
+function killCharts(){ [cDepot,cIncome,cFreedom].forEach(c=>c&&c.destroy()); }
+
+const baseOpts = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{
+    legend:{display:false},
+    tooltip:{
+      backgroundColor:'#0b1220',borderColor:'#182644',borderWidth:1,
+      titleColor:'#5d78a3',bodyColor:'#dde4f0',padding:10,
+    }
+  },
+  scales:{
+    x:{grid:{color:'rgba(24,38,68,.4)'},ticks:{color:'#5d78a3',font:{family:'IBM Plex Mono',size:10},maxTicksLimit:12}},
+    y:{grid:{color:'rgba(24,38,68,.4)'},ticks:{color:'#5d78a3',font:{family:'IBM Plex Mono',size:10},
+        callback:v=>v>=1e6?(v/1e6).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1})+'M':v>=1e3?Math.round(v/1e3)+'k':v}}
+  }
+};
+
+function mkDepotChart(ans,ren){
+  const ctx=document.getElementById('c-depot').getContext('2d');
+  const chartLabels=[...ans.map(r=>r.age),...ren.map(r=>r.age)];
+  const msPlugin={
+    id:'msLines',
+    afterDraw(chart){
+      if(!msData.length) return;
+      const {ctx:c,chartArea:ca,scales} = chart;
+      msData.forEach((ms,i)=>{
+        const idx=chartLabels.indexOf(ms.age);
+        if(idx<0) return;
+        const {left,right}=ca;
+        const x=left+(idx/(chartLabels.length-1))*(right-left);
+        c.save();
+        c.strokeStyle='rgba(240,160,48,0.5)';
+        c.lineWidth=1;
+        c.setLineDash([4,3]);
+        c.beginPath(); c.moveTo(x,ca.top); c.lineTo(x,ca.bottom); c.stroke();
+        c.setLineDash([]);
+        c.fillStyle='#f0a030';
+        c.font='500 9px IBM Plex Mono,monospace';
+        c.textAlign='left';
+        c.fillText(ms.label, x+3, ca.top+11+i*13);
+        c.fillStyle='rgba(240,160,48,0.65)';
+        c.fillText('Alter '+ms.age, x+3, ca.top+21+i*13);
+        c.restore();
+      });
+    }
+  };
+  cDepot=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:chartLabels,
+      datasets:[
+        {label:'Ansparphase',
+         data:ans.map(r=>r.depEnd),
+         borderColor:'#f0a030',backgroundColor:'rgba(240,160,48,.08)',
+         borderWidth:2,pointRadius:ans.map(r=>r.ms?5:0),
+         pointBackgroundColor:'#f0a030',tension:.35,fill:true},
+        {label:'Rentenphase',
+         data:[...Array(ans.length-1).fill(null), ans[ans.length-1]?.depEnd, ...ren.map(r=>r.depEnd)],
+         borderColor:'#3882f5',backgroundColor:'rgba(56,130,245,.07)',
+         borderWidth:2,pointRadius:[...Array(ans.length-1).fill(0),0,...ren.map(r=>r.ms?5:0)],
+         pointBackgroundColor:'#3882f5',tension:.35,fill:true},
+      ]
+    },
+    options:{...baseOpts,
+      plugins:{...baseOpts.plugins,
+        legend:{display:true,labels:{color:'#5d78a3',font:{family:'IBM Plex Mono',size:10},usePointStyle:true,pointStyleWidth:8}},
+        tooltip:{...baseOpts.plugins.tooltip,
+          callbacks:{label:c=>`${c.dataset.label}: ${fmtE(c.raw)}`}
+        }
+      }
+    },
+    plugins:[msPlugin]
+  });
+}
+
+function mkIncomeChart(ren){
+  const ctx=document.getElementById('c-income').getContext('2d');
+  cIncome=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:ren.map(r=>r.age),
+      datasets:[
+        {label:'Dividende (netto)',data:ren.map(r=>r.divNetMo),backgroundColor:'rgba(240,160,48,.75)',stack:'s'},
+        {label:'GRV (netto)',data:ren.map(r=>r.grvMo),backgroundColor:'rgba(56,130,245,.75)',stack:'s'},
+        {label:'Betriebsrente',data:ren.map(r=>r.basfMo),backgroundColor:'rgba(14,200,130,.75)',stack:'s'},
+        {label:'Verkauf brutto',data:ren.map(r=>r.entMo),backgroundColor:'rgba(240,160,48,.45)',stack:'s'},
+        {label:'Bedarf',data:ren.map(r=>r.lhkMo),type:'line',
+         borderColor:'#e84848',backgroundColor:'transparent',borderWidth:1.5,
+         pointRadius:0,tension:.3},
+        {label:'WR-Leitplanke',data:ren.map(r=>r.wrMo),type:'line',
+         borderColor:'rgba(255,201,74,.8)',backgroundColor:'transparent',borderWidth:1.25,borderDash:[5,4],
+         pointRadius:0,tension:.3},
+      ]
+    },
+    options:{...baseOpts,
+      scales:{
+        x:{...baseOpts.scales.x,stacked:true},
+        y:{...baseOpts.scales.y,stacked:true,ticks:{...baseOpts.scales.y.ticks,callback:v=>v>=1e3?(v/1e3).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1})+'k':v}}
+      },
+      plugins:{...baseOpts.plugins,
+        legend:{display:true,labels:{color:'#5d78a3',font:{family:'IBM Plex Mono',size:10},usePointStyle:true,pointStyleWidth:8}},
+        tooltip:{...baseOpts.plugins.tooltip,
+          callbacks:{label:c=>`${c.dataset.label}: ${fmtE(c.raw)}`}
+        }
+      }
+    }
+  });
+}
+
+function mkFreedomChart(ans,ren,p,curYear){
+  const ctx=document.getElementById('c-freedom').getContext('2d');
+  const lhkBase=p.lhk.reduce((a,b)=>a+b,0);
+  const ansFrd=ans.map(r=>{
+    const lhk=lhkBase*Math.pow(1+p.inf,r.year-curYear);
+    const wrMo = r.depEnd * p.wr / 12;
+    const dMo  = r.divNetMo;
+    return Math.min(200, (wrMo+dMo)/lhk*100);
+  });
+  const renFrd=ren.map(r=>Math.min(200,r.frd*100));
+
+  cFreedom=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:[...ans.map(r=>r.age),...ren.map(r=>r.age)],
+      datasets:[
+        {label:'Freiheitsgrad (%)',
+         data:[...ansFrd,...renFrd],
+         borderColor:'#0ec882',backgroundColor:'rgba(14,200,130,.08)',
+         borderWidth:2,pointRadius:0,tension:.35,fill:true},
+        {label:'100% Ziel',
+         data:[...ans.map(()=>100),...ren.map(()=>100)],
+         borderColor:'rgba(232,72,72,.4)',backgroundColor:'transparent',
+         borderWidth:1,borderDash:[4,4],pointRadius:0},
+      ]
+    },
+    options:{...baseOpts,
+      plugins:{...baseOpts.plugins,
+        legend:{display:true,labels:{color:'#5d78a3',font:{family:'IBM Plex Mono',size:10},usePointStyle:true,pointStyleWidth:8}},
+        tooltip:{...baseOpts.plugins.tooltip,
+          callbacks:{label:c=>`${c.dataset.label}: ${typeof c.raw==='number'?toDE(c.raw,1):'—'}%`}
+        }
+      },
+      scales:{
+        x:baseOpts.scales.x,
+        y:{...baseOpts.scales.y,ticks:{...baseOpts.scales.y.ticks,callback:v=>v+'%'}}
+      }
+    }
+  });
+}
+
+let msData = []; // milestone ages for chart markers
+
+// ── MILESTONES ───────────────────────────────────────────────────────
+function renderMilestones(anspar, curYear, curAge){
+  const thresholds = [500000, 1000000, 1500000, 2000000];
+  const labels     = ['500.000 €','1 Mio. €','1,5 Mio. €','2 Mio. €'];
+  const html = thresholds.map((t,i) => {
+    const row = anspar.find(r => r.depEnd >= t);
+    if(!row){
+      return `<div class="ms-card unreached">
+        <div class="ms-threshold">${labels[i]}</div>
+        <div class="ms-year">—</div>
+        <div class="ms-age">nicht erreicht</div>
+        <div class="ms-eta">im Modell</div>
+      </div>`;
+    }
+    const yrsAway = row.year - curYear;
+    const etaTxt  = yrsAway === 0 ? 'dieses Jahr'
+                  : yrsAway === 1 ? 'in 1 Jahr'
+                  : `in ${yrsAway} Jahren`;
+    return `<div class="ms-card reached">
+      <div class="ms-threshold">✓ ${labels[i]}</div>
+      <div class="ms-year">${row.year}</div>
+      <div class="ms-age">Alter ${row.age}</div>
+      <div class="ms-eta">${etaTxt}</div>
+    </div>`;
+  }).join('');
+  // Store for chart plugin
+  msData = thresholds.map((t,i)=>({
+    age: anspar.find(r=>r.depEnd>=t)?.age ?? null,
+    label: labels[i]
+  })).filter(m=>m.age!==null);
+  document.getElementById('ms-row').innerHTML = html;
+}
+
+// ── RENDER ───────────────────────────────────────────────────────────
+function render(){
+  killCharts();
+  const R = calc();
+  const {p,anspar,renten,curAge,curYear,fireYear,grvBrut,grvNet,absch,rpFire,ppAmt,depleted} = R;
+
+  // ── KPIs ──
+  const lastA = anspar[anspar.length-1];
+  const first = renten[0];
+  document.getElementById('k-dep').textContent   = fmtE(lastA?.depEnd);
+  document.getElementById('k-dep-s').textContent = `Alter ${p.fa} · ${fireYear}`;
+  document.getElementById('k-div').textContent   = fmtE(first?.divNetMo,0);
+  document.getElementById('k-div-s').textContent = `bei ${fmtE(lastA?.depEnd)} Depot`;
+  const frd0 = first ? first.frd*100 : 0;
+  const wrPct = toDE(p.wr*100,1);
+  document.getElementById('k-frd').textContent   = toDE(frd0,1)+'%';
+  document.getElementById('k-frd-s').textContent = `bei ${wrPct}% WR: ${fmtE(lastA ? lastA.depEnd*p.wr/12 : 0,0)}/Monat`;
+  const gap = first?.wrBufferMo??0;
+  document.getElementById('k-gap').textContent   = fmtE(Math.abs(gap),0);
+  document.getElementById('k-gap-s').textContent = gap>=0?'Puffer zur WR / Monat':'über WR / Monat';
+  document.getElementById('k-gap-s').title = 'WR-Puffer = WR-Leitplanke brutto minus tatsächlich benötigter Brutto-Verkauf';
+  const gc = document.getElementById('k-gap-card');
+  gc.className = 'kc '+(gap>=0?'grn':'red');
+
+  // ── Milestones ──
+  renderMilestones(anspar, curYear, curAge);
+
+  // wr-hint in sidebar
+  const wrHint = document.getElementById('wr-hint');
+  if(wrHint && lastA){
+    const wrMo = lastA.depEnd * p.wr / 12;
+    wrHint.textContent = `= ${fmtE(wrMo,0)}/Monat aus ${fmtE(lastA.depEnd)} Depot`;
+  }
+
+  // Depletion warning
+  const warn = document.getElementById('hdr-warn');
+  const dtag = document.getElementById('depletion-tag');
+  if(depleted){
+    warn.style.display='block';
+    dtag.style.display='block';
+    dtag.textContent=`Depot erschöpft: Alter ${depleted.age} (${depleted.year})`;
+  } else {
+    warn.style.display='none';
+    dtag.style.display='none';
+  }
+
+  // ── Charts ──
+  mkDepotChart(anspar,renten);
+  mkIncomeChart(renten);
+  mkFreedomChart(anspar,renten,p,curYear);
+
+  // ── Anspar table ──
+  document.getElementById('tb-an').innerHTML = anspar.map(r=>`
+    <tr class="${r.ms?'ms':''}">
+      <td>${r.age}</td><td>${r.year}</td>
+      <td>${fmtE(r.depStart)}</td><td>${fmtE(r.wachstum)}</td><td>${fmtE(r.divGross)}</td>
+      <td>${fmtE(r.invFix)}</td><td>${r.invVar>0?fmtE(r.invVar):'—'}</td>
+      <td>${fmtE(r.depEnd)}</td><td>${fmtE(r.divNetMo)}</td>
+    </tr>`).join('');
+
+  // ── Renten table ──
+  document.getElementById('tb-re').innerHTML = renten.map(r=>`
+    <tr class="${r.ms?'ms':''} ${r.dep?'dep':''}">
+      <td>${r.age}</td><td>${r.year}</td>
+      <td>${fmtE(r.depStart)}</td><td>${fmtE(r.wachstum)}</td><td>${fmtE(r.divGross)}</td>
+      <td>${fmtE(r.divNetMo)}</td><td>${fmtE(r.entMo)}</td>
+      <td>${r.grvMo>0?fmtE(r.grvMo):'—'}</td>
+      <td>${r.basfMo>0?fmtE(r.basfMo):'—'}</td>
+      <td>${r.ppThisYr>0?fmtE(r.ppThisYr):'—'}</td>
+      <td>${fmtE(r.lhkMo)}</td><td>${fmtE(r.wrMo)}</td>
+      <td style="color:${r.wrBufferMo>=0?'var(--green)':'var(--red)'}">${fmtE(r.wrBufferMo,0)}</td>
+      <td>${fmtE(r.depEnd)}</td>
+    </tr>`).join('');
+
+  // ── Assumptions ──
+  const lhkBase=p.lhk.reduce((a,b)=>a+b,0);
+  const items=[
+    {l:'Geburtsdatum',             v:p.bd},
+    {l:'Aktuelles Alter',          v:curAge+' Jahre'},
+    {l:'FIRE-Alter (Ziel)',        v:`${p.fa} (Jahr ${fireYear})`},
+    {l:'Jahre bis FIRE',           v:`${p.fa-curAge} Jahre`},
+    {l:'Depotwert Basis',          v:fmtE(p.dep+(p.ct?p.cb:0))},
+    {l:'Wachstum p.a. (Preis)',    v:pct(p.gr)},
+    {l:'Bruttodividende',          v:pct(p.dv)},
+    {l:'Gesamtrendite (nominal)',   v:pct(p.gr+p.dv)},
+    {l:'Sparrate heute',           v:`${fmtE(p.mo)}/Monat`},
+    {l:'Sparraten-Dynamik',        v:pct(p.dy)+' p.a.'},
+    {l:'Einmalinvestition',        v:p.li>0?`${fmtE(p.li)} in ${p.ly}`:'—'},
+    {l:'Crypto',                   v:p.ct?fmtE(p.cb)+' (einbezogen)':'nicht einbezogen'},
+    {l:'Lebenshaltung heute',      v:`${fmtE(lhkBase)}/Monat`},
+    {l:'Inflation',                v:pct(p.inf)+' p.a.'},
+    {l:'KESt-Satz (inkl. Soli)',   v:toDE(KEST*100,3)+'%'},
+    {l:'Freistellungsbetrag',      v:`${fmtE(FRST)}/Jahr`},
+    {l:'Rentenpunkte heute',       v:toDE(p.rp,4)},
+    {l:'Rentenpunkte p.a.',        v:p.rpa},
+    {l:'Rentenpunkte bei FIRE',    v:toDE(rpFire,2)},
+    {l:'GRV Rentenabschlag',       v:`${toDE(absch,1)}% (${(p.rra-p.ga)*12} Mon. vor RRA)`},
+    {l:'GRV einbezogen',           v:p.grvOn?'ja':'nein'},
+    {l:'GRV Brutto/Monat',         v:`${fmtE(grvBrut,2)} ab Alter ${p.ga}`},
+    {l:'GRV Netto/Monat',          v:p.grvOn?`${fmtE(grvNet,2)} (Faktor ${p.gnf})`:'deaktiviert'},
+    {l:'Betriebsrente einbezogen', v:p.brOn?'ja':'nein'},
+    {l:'Betriebsrente/Monat',      v:p.brOn?`${fmtE(p.bpk)} ab Alter ${p.brAge}`:'deaktiviert'},
+    {l:'Einmalzahlung (Betriebsr.)', v:p.brOn?`${fmtE(p.bpp)} bei Alter ${p.brAge}`:'deaktiviert'},
+    {l:'Rentenlogik',              v:'Wachstum = Kursgewinn, kein Cashflow · Verkauf brutto deckt den Netto-Restbedarf · WR-Puffer = WR-Leitplanke minus Verkauf brutto'},
+  ];
+  document.getElementById('ag').innerHTML=items.map(i=>`
+    <div class="ai"><div class="al">${i.l}</div><div class="av">${i.v}</div></div>`).join('');
+
+  // ── Header meta ──
+  document.getElementById('hdr-meta').textContent=
+    `Alter ${curAge} · FIRE in ${p.fa-curAge} Jahren (${fireYear}) · ${new Date().toLocaleDateString('de-DE')}`;
+
+  // ── GRV hints ──
+  const abschHint = document.getElementById('grv-hint');
+  if(!p.grvOn){
+    abschHint.textContent = 'GRV aktuell deaktiviert';
+    abschHint.className = 'hint';
+    document.getElementById('grv-calc-hint').textContent = 'GRV ist ausgeschaltet und wird in der Rentenphase nicht berücksichtigt.';
+  } else {
+    abschHint.textContent = absch===0
+      ? `Kein Abschlag (Regelalter ${p.rra})`
+      : `Abschlag: ${toDE(absch,1)}% (${(p.rra-p.ga)*12} Monate vor Regelalter)`;
+    abschHint.className='hint '+(absch===0?'ok':'warn');
+    document.getElementById('grv-calc-hint').textContent=
+      `GRV: ${toDE(rpFire,2)} RP × ${fmtE(p.rpw,2)} × ${toDE((1-absch/100)*100,1)}% = ${fmtE(grvBrut,2)} brutto → ${fmtE(grvNet,2)} netto`;
+  }
+}
+
+
+// ── PERSISTED DEFAULTS & CURRENT STATE ───────────────────────────────
+const DEFAULTS_STORAGE_KEY = 'portfolioPlannerDefaultsV4';
+const CURRENT_STORAGE_KEY  = 'portfolioPlannerCurrentV4';
+
+function getDefaultFieldIds(){
+  return [
+    'def-p-bd','def-p-fa','def-p-ga','def-p-rra',
+    'def-p-dep','def-p-gr','def-p-dv','def-p-wr','def-p-ct','def-p-cb',
+    'def-p-mo','def-p-dy','def-p-li','def-p-ly',
+    'def-p-l1','def-p-l2','def-p-l3','def-p-l4','def-p-l5','def-p-l6','def-p-inf',
+    'def-p-rp','def-p-rpa','def-p-rpw','def-p-gnf','def-p-grv-on',
+    'def-p-br-on','def-br-sel',
+    'def-p-bpk62','def-p-bpp62','def-p-bpk65','def-p-bpp65','def-p-bpk67','def-p-bpp67'
+  ];
+}
+
+function readDefaultStateFromUI(){
+  const state = {};
+  getDefaultFieldIds().forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    state[id] = el.type === 'checkbox' ? !!el.checked : el.value;
+  });
+  return state;
+}
+
+function writeDefaultStateToUI(state){
+  if(!state) return;
+  getDefaultFieldIds().forEach(id=>{
+    if(!(id in state)) return;
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(el.type === 'checkbox') el.checked = !!state[id];
+    else el.value = state[id];
+  });
+}
+
+function saveDefaultsToStorage(){
+  try{
+    localStorage.setItem(DEFAULTS_STORAGE_KEY, JSON.stringify(readDefaultStateFromUI()));
+  }catch(e){}
+}
+
+function loadDefaultsFromStorage(){
+  try{
+    const raw = localStorage.getItem(DEFAULTS_STORAGE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){
+    return null;
+  }
+}
+
+function syncMainInputsFromDefaults(){
+  const textIds=['p-dep','p-gr','p-dv','p-wr','p-cb','p-mo','p-dy','p-li','p-ly','p-l1','p-l2','p-l3','p-l4','p-l5','p-l6','p-inf','p-rp','p-rpa','p-rpw','p-gnf','p-bpk62','p-bpk65','p-bpk67','p-bpp62','p-bpp65','p-bpp67','p-bd','p-rra'];
+  textIds.forEach(id=>{
+    const d=document.getElementById('def-'+id);
+    const m=document.getElementById(id);
+    if(d&&m) m.value=d.value;
+  });
+
+  ['p-fa','p-ga'].forEach(id=>{
+    const d=document.getElementById('def-'+id);
+    const m=document.getElementById(id);
+    if(d&&m){
+      m.value=d.value;
+      document.getElementById(id+'-v').textContent=d.value;
+    }
+  });
+
+  const dc=document.getElementById('def-p-ct');
+  const mc=document.getElementById('p-ct');
+  if(dc&&mc){
+    mc.checked=dc.checked;
+    document.getElementById('ctrow').style.display=dc.checked?'flex':'none';
+  }
+
+  const dgrv=document.getElementById('def-p-grv-on');
+  const mgrv=document.getElementById('p-grv-on');
+  if(dgrv&&mgrv) mgrv.checked=dgrv.checked;
+
+  const dbr=document.getElementById('def-p-br-on');
+  const mbr=document.getElementById('p-br-on');
+  if(dbr&&mbr) mbr.checked=dbr.checked;
+
+  const sel=document.getElementById('def-br-sel');
+  if(sel){
+    document.querySelectorAll('input[name="br-sel"]').forEach(r=>{ r.checked=(r.value===sel.value); });
+  }
+}
+
+function getMainFieldIds(){
+  return [
+    'p-bd','p-fa','p-ga','p-rra',
+    'p-dep','p-gr','p-dv','p-wr','p-ct','p-cb',
+    'p-mo','p-dy','p-li','p-ly',
+    'p-l1','p-l2','p-l3','p-l4','p-l5','p-l6','p-inf',
+    'p-rp','p-rpa','p-rpw','p-gnf','p-grv-on','p-br-on',
+    'br-sel',
+    'p-bpk62','p-bpp62','p-bpk65','p-bpp65','p-bpk67','p-bpp67'
+  ];
+}
+
+function readMainStateFromUI(){
+  const state = {};
+  getMainFieldIds().forEach(id=>{
+    if(id === 'br-sel'){
+      state[id] = document.querySelector('input[name="br-sel"]:checked')?.value || '62';
+      return;
+    }
+    const el = document.getElementById(id);
+    if(!el) return;
+    state[id] = el.type === 'checkbox' ? !!el.checked : el.value;
+  });
+  return state;
+}
+
+function writeMainStateToUI(state){
+  if(!state) return;
+  getMainFieldIds().forEach(id=>{
+    if(!(id in state)) return;
+    if(id === 'br-sel'){
+      document.querySelectorAll('input[name="br-sel"]').forEach(r=>{ r.checked = (r.value === String(state[id])); });
+      return;
+    }
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(el.type === 'checkbox') el.checked = !!state[id];
+    else el.value = state[id];
+  });
+  ['p-fa','p-ga'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) document.getElementById(id+'-v').textContent=el.value;
+  });
+  const ct=document.getElementById('p-ct');
+  if(ct) document.getElementById('ctrow').style.display=ct.checked?'flex':'none';
+}
+
+function saveCurrentToStorage(){
+  try{
+    localStorage.setItem(CURRENT_STORAGE_KEY, JSON.stringify(readMainStateFromUI()));
+  }catch(e){}
+}
+
+function loadCurrentFromStorage(){
+  try{
+    const raw = localStorage.getItem(CURRENT_STORAGE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){
+    return null;
+  }
+}
+
+
+function syncDefaultsFromMainInputs(){
+  const textIds=['p-dep','p-gr','p-dv','p-wr','p-cb','p-mo','p-dy','p-li','p-ly','p-l1','p-l2','p-l3','p-l4','p-l5','p-l6','p-inf','p-rp','p-rpa','p-rpw','p-gnf','p-bpk62','p-bpk65','p-bpk67','p-bpp62','p-bpp65','p-bpp67','p-bd','p-rra'];
+  textIds.forEach(id=>{
+    const d=document.getElementById('def-'+id);
+    const m=document.getElementById(id);
+    if(d&&m) d.value=m.value;
+  });
+
+  ['p-fa','p-ga'].forEach(id=>{
+    const d=document.getElementById('def-'+id);
+    const m=document.getElementById(id);
+    if(d&&m) d.value=m.value;
+  });
+
+  const dc=document.getElementById('def-p-ct');
+  const mc=document.getElementById('p-ct');
+  if(dc&&mc) dc.checked=mc.checked;
+
+  const dgrv=document.getElementById('def-p-grv-on');
+  const mgrv=document.getElementById('p-grv-on');
+  if(dgrv&&mgrv) dgrv.checked=mgrv.checked;
+
+  const dbr=document.getElementById('def-p-br-on');
+  const mbr=document.getElementById('p-br-on');
+  if(dbr&&mbr) dbr.checked=mbr.checked;
+
+  const sel=document.querySelector('input[name="br-sel"]:checked');
+  const defSel=document.getElementById('def-br-sel');
+  if(sel&&defSel) defSel.value=sel.value;
+}
+
+function persistFromMainInputs(){
+  saveCurrentToStorage();
+}
+
+function persistFromDefaultsPanel(){
+  saveDefaultsToStorage();
+}
+
+function saveCurrentAsDefaults(){
+  syncDefaultsFromMainInputs();
+  saveDefaultsToStorage();
+}
+
+function initializePersistedDefaults(){
+  const savedDefaults = loadDefaultsFromStorage();
+  if(savedDefaults) writeDefaultStateToUI(savedDefaults);
+  const savedCurrent = loadCurrentFromStorage();
+  if(savedCurrent) writeMainStateToUI(savedCurrent);
+  else syncMainInputsFromDefaults();
+}
+
+
+// ── EVENTS ───────────────────────────────────────────────────────────
+
+function toggleSidebar(){
+  document.getElementById('sb').classList.toggle('open');
+  document.getElementById('sb-overlay').classList.toggle('show');
+}
+// Close sidebar on render (mobile UX)
+const _origRender = typeof render === 'function' ? null : null;
+
+function tog(h){ h.parentElement.classList.toggle('open'); }
+
+
+function resetToDefaults(){
+  syncMainInputsFromDefaults();
+  saveCurrentToStorage();
+  render();
+}
+
+// Slider step helpers
+function stepSlider(id, delta){
+  const el = document.getElementById(id);
+  const val = Math.min(+el.max, Math.max(+el.min, +el.value + delta));
+  el.value = val;
+  document.getElementById(id+'-v').textContent = val;
+  persistFromMainInputs();
+  render();
+}
+
+// Percent input step helpers
+function stepPct(id, delta){
+  const el = document.getElementById(id);
+  const cur = parseFloat(el.value.replace(',','.')) || 0;
+  const next = Math.max(0, Math.round((cur + delta) * 10) / 10);
+  el.value = toDE(next, 1);
+  persistFromMainInputs();
+  render();
+}
+
+// Sliders
+document.getElementById('p-fa').addEventListener('input',function(){
+  document.getElementById('p-fa-v').textContent=this.value;
+  persistFromMainInputs();
+  render();
+});
+document.getElementById('p-ga').addEventListener('input',function(){
+  document.getElementById('p-ga-v').textContent=this.value;
+  persistFromMainInputs();
+  render();
+});
+
+// Toggle visibility / current scenario switches
+document.getElementById('p-ct').addEventListener('change',function(){
+  document.getElementById('ctrow').style.display=this.checked?'flex':'none';
+  persistFromMainInputs();
+  render();
+});
+['p-grv-on','p-br-on'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el){
+    el.addEventListener('change',()=>{
+      persistFromMainInputs();
+      render();
+    });
+  }
+});
+
+// Tabs
+document.querySelectorAll('.tb').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    const t=this.dataset.t;
+    document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+    document.querySelectorAll('.tp').forEach(p=>p.classList.remove('on'));
+    this.classList.add('on');
+    document.getElementById('tp-'+t).classList.add('on');
+  });
+});
+
+// Radio buttons for Betriebsrente
+document.querySelectorAll('input[name="br-sel"]').forEach(r=>r.addEventListener('change',()=>{
+  persistFromMainInputs();
+  render();
+}));
+
+document.querySelectorAll('#sb input[type=text],#sb input[type=date]').forEach(inp=>{
+  inp.addEventListener('input',()=>{
+    persistFromMainInputs();
+    render();
+  });
+  inp.addEventListener('change',()=>{
+    persistFromMainInputs();
+    render();
+  });
+});
+
+document.querySelectorAll('.def-grid input,.def-grid select').forEach(inp=>{
+  const evt = inp.type === 'checkbox' || inp.tagName === 'SELECT' ? 'change' : 'input';
+  inp.addEventListener(evt,()=>{
+    persistFromDefaultsPanel();
+  });
+  if(evt !== 'change'){
+    inp.addEventListener('change',()=>{
+      persistFromDefaultsPanel();
+    });
+  }
+});
+
+// PWA Service Worker
+if('serviceWorker' in navigator){
+  const swSrc=`
+self.addEventListener('install',e=>{
+  e.waitUntil(
+    caches.open('pp-v4').then(c=>c.add(location.href))
+  );
+  self.skipWaiting();
+});
+self.addEventListener('activate',e=>{ e.waitUntil(self.clients.claim()); });
+self.addEventListener('fetch',e=>{
+  e.respondWith(
+    caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{
+      const rc=res.clone();
+      caches.open('pp-v4').then(c=>c.put(e.request,rc));
+      return res;
+    }))
+  );
+});`;
+  const blob=new Blob([swSrc],{type:'application/javascript'});
+  const url=URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url).catch(()=>{});
+}
+
+// Initial render
+initializePersistedDefaults();
+render();
+</script>
+</body>
+</html>
